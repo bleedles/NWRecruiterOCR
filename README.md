@@ -1,0 +1,2 @@
+# NWRecruiterOCR
+POC for OCR
