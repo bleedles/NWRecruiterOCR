@@ -123,6 +123,11 @@ exports.uploadFile = function(req, res) {
     var upload = multer({ dest: './public/images/uploads' }).single('picture');
     uploadImage()
       .then(function () {
+        console.log("After multer:");
+        console.log("req.file:");
+        console.log(req.file);
+        console.log("req.body:");
+        console.log(req.body);
         var stream = fs.createReadStream('./public/images/uploads/' + req.file.filename);
         client.files.uploadFile('32442834639', req.file.filename, stream, function(err, response){
             if(err) {
