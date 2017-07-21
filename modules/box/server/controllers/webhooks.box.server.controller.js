@@ -197,19 +197,29 @@ exports.getFilesMatchingKeywords = function(req, res) {
                     }
                 }
                 var counter = 0;
+                var outFiles = [];
                 for(var f in files) {
                     var file = files[f];
                     (function(file) {
                         //Get Metadata
-                        client.files.getMetadata(fileid, scope, templatekey, function(err, response) {
+                        console.log(file);
+                        client.files.getAllMetadata(file.id, function(err, response) {
                             if(err) {
                                 console.error(err);
                                 res.status(500).send(err);
                             } else {
+                                console.log("all metadata");
                                 console.log(response);
+                                for(var m in response.entries) {
+                                    var metaTemplate = response.entries[m];
+                                    if(metaTemplate.$template == 'nwrecruit') {
+                                        file.metadata = metaTemplate;
+                                    }
+                                    outFiles.push(file);
+                                }
                                 counter++;
                                 if(counter == files.length) {
-                                    res.json({message: "success"});
+                                    res.json({files: outFiles});
                                 }
                             }
                         });
@@ -218,9 +228,6 @@ exports.getFilesMatchingKeywords = function(req, res) {
             }
         }
     );
-    console.log(req.body);
-    console.log(keywords);
-    res.json({message: 'Got keywords ' + keywords.join(',')});
 };
 
 exports.uploadFile = function(req, res) {
@@ -258,15 +265,9 @@ exports.uploadFile = function(req, res) {
                 
                 console.log('Assigning metadata..');
                 console.log(req.body);
-                var metadata = {
-                    name: req.body.data.name,
-                    eligible: req.body.data.eligible,
-                    relocate: req.body.data.relocate,
-                    notice: req.body.data.notice,
-                    salary: req.body.data.salary,
-                    notes: req.body.data.notes,
-                    tags: ''
-                };
+                
+                var metadata = JSON.parse(req.body.data);
+                console.log(metadata);
                 runOCR('https://nwrecruiter.azurewebsites.net/uploads/' + req.file.filename, function(err, response) {
                     if(err) {
                         console.error(err);
@@ -274,7 +275,7 @@ exports.uploadFile = function(req, res) {
                     } else {
                         console.log(response);
                         metadata.tags = response.matchedKeywordsString;
-                        client.files.update(fileid, {tags : matchedKeywordsArray}, function(err, response) {
+                        client.files.update(fileid, {tags : response.matchedKeywordsArray}, function(err, response) {
                             if(err) {
                                 console.error(err);
                                 res.status(500).send(err);
