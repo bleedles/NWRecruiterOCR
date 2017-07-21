@@ -123,6 +123,7 @@ exports.uploadFile = function(req, res) {
                 res.status(500).send(err);
             } else {
                 console.log(response);
+                //
                 res.json({message: "success"});
             }
         });
@@ -135,7 +136,7 @@ exports.uploadFile = function(req, res) {
         return new Promise(function (resolve, reject) {
             upload(req, res, function (uploadError) {
                 if (uploadError) {
-                    reject(errorHandler.getErrorMessage(uploadError));
+                    reject(uploadError);
                 } else {
                     resolve();
                 }
