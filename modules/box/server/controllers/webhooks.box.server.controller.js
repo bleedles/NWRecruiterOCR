@@ -4,6 +4,7 @@ var validator = require('validator'),
   fs = require('fs'),
   path = require('path'),
   BoxSDK = require('box-node-sdk'),
+  multer = require('multer'),
   cognitiveServices = require('cognitive-services'),
   config = require(path.resolve('./config/config'));
 
@@ -37,7 +38,6 @@ exports.getAndRunOCR = function (req, res) {
                     // write the file to disk
                     var output = fs.createWriteStream('./public/images/downloads/' + fileinfo.name);
                     stream.pipe(output);
-
                 }
             });
         }
@@ -107,7 +107,41 @@ exports.testOCR = function(req, res) {
 };
 
 exports.uploadFile = function(req, res) {
-    res.status(200).send({message: "Working api!"});
+    console.log("req:");
+    console.log(req);
+    console.log("req.file:");
+    console.log(req.file);
+    console.log("req.body:");
+    console.log(req.body);
+    var upload = multer({ dest: './public/images/uploads' }).single('resumeUpload');
+    uploadImage()
+      .then(function () {
+        var stream = fs.createReadStream('./public/images/uploads/' + req.file.filename);
+        client.files.uploadFile('32442834639', req.file.filename, stream, function(err, response){
+            if(err) {
+                console.error(err);
+                res.status(500).send(err);
+            } else {
+                console.log(response);
+                res.json({message: "success"});
+            }
+        });
+      })
+      .catch(function (err) {
+        res.status(500).send(err);
+      });
+
+    function uploadImage () {
+        return new Promise(function (resolve, reject) {
+            upload(req, res, function (uploadError) {
+                if (uploadError) {
+                    reject(errorHandler.getErrorMessage(uploadError));
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
 };
 
 
