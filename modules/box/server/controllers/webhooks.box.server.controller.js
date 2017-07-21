@@ -190,10 +190,12 @@ exports.getFilesMatchingKeywords = function(req, res) {
                 var files = [];
                 for(var e in response.entries) {
                     var item = response.entries[e];
-                    var intersection = _.intersection([keywords, item.tags]);
-                    if(item.type == 'file' && intersection.length > 0) {
-                        var file = item;
-                        files.push(file);
+                    for(var w in keywords) {
+                        if(item.type == 'file' && _.includes(item.tags, keywords[w])){
+                            var file = item;
+                            files.push(file);
+                            break;
+                        }
                     }
                 }
                 var counter = 0;
