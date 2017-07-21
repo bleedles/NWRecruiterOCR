@@ -54,6 +54,7 @@ exports.testOCR = function(req, res) {
         detectOrientation: "true",
         "content-type": "application/json"
     };
+    
     /* Input passed within the POST body. Supported input methods: raw image binary or image URL. 
     
     Input requirements: 
