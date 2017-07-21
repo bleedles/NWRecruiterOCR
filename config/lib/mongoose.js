@@ -6,6 +6,7 @@
 var config = require('../config'),
   chalk = require('chalk'),
   path = require('path'),
+  Tesseract = require('tesseract.js'),
   mongoose = require('mongoose');
 
 // Load the mongoose models

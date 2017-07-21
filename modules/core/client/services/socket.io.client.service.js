@@ -6,9 +6,9 @@
     .module('core')
     .factory('Socket', Socket);
 
-  Socket.$inject = ['Authentication', '$state', '$timeout'];
+  Socket.$inject = ['$state', '$timeout'];
 
-  function Socket(Authentication, $state, $timeout) {
+  function Socket($state, $timeout) {
     var service = {
       connect: connect,
       emit: emit,
@@ -24,9 +24,9 @@
     // Connect to Socket.io server
     function connect() {
       // Connect only when authenticated
-      if (Authentication.user) {
-        service.socket = io();
-      }
+      // if (Authentication.user) {
+      //   service.socket = io();
+      // }
     }
 
     // Wrap the Socket.io 'emit' method

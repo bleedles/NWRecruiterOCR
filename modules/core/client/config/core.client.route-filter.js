@@ -5,9 +5,9 @@
     .module('core')
     .run(routeFilter);
 
-  routeFilter.$inject = ['$rootScope', '$state', 'Authentication'];
+  routeFilter.$inject = ['$rootScope', '$state'];
 
-  function routeFilter($rootScope, $state, Authentication) {
+  function routeFilter($rootScope, $state) {
     $rootScope.$on('$stateChangeStart', stateChangeStart);
     $rootScope.$on('$stateChangeSuccess', stateChangeSuccess);
 
@@ -17,7 +17,7 @@
         var allowed = false;
 
         for (var i = 0, roles = toState.data.roles; i < roles.length; i++) {
-          if ((roles[i] === 'guest') || (Authentication.user && Authentication.user.roles !== undefined && Authentication.user.roles.indexOf(roles[i]) !== -1)) {
+          if ((roles[i] === 'guest')) {
             allowed = true;
             break;
           }
@@ -28,10 +28,7 @@
           if (Authentication.user !== null && typeof Authentication.user === 'object') {
             $state.transitionTo('forbidden');
           } else {
-            $state.go('authentication.signin').then(function () {
-              // Record previous state
-              storePreviousState(toState, toParams);
-            });
+            
           }
         }
       }
