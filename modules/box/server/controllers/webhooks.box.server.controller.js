@@ -19,12 +19,6 @@ var sdk = new BoxSDK({
 //Box Client
 var client = sdk.getBasicClient(config.box.appAuth.accessToken);
 
-//Azure Cog Services Keys
-var endpoint_hostname =  "https://westcentralus.api.cognitive.microsoft.com";
-var endpoint_path = "/vision/v1.0";
-var key1 = "f2554725f78f403fa734e95e7e381a85";
-var key2 = "47c048f02ea54444a41e5983fff27511";
-
 /**
  * Render the main application page
  */
@@ -52,7 +46,7 @@ exports.getAndRunOCR = function (req, res) {
 
 exports.testOCR = function(req, res) {
     const computerVision = cognitiveServices.computerVision({
-        API_KEY: key1
+        API_KEY: config.azure.cognitiveServicesKey1
     });
     
     const parameters = {
@@ -70,7 +64,7 @@ exports.testOCR = function(req, res) {
     
     */
     const body = {
-        'url': 'http://4.78.219.6:3000/downloads/ResumeScreenShot.png'
+        'url': 'https://nwrecruiter.azurewebsites.net/downloads/ResumeScreenShot.png'
     };
     
     computerVision.ocr({
