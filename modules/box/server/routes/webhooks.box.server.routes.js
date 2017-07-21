@@ -11,4 +11,6 @@ module.exports = function (app) {
 
   app.route('/api/file/upload').post(webhooks.uploadFile);
 
+  app.route('/api/files').post(webhooks.getFilesMatchingKeywords);
+
 };

@@ -106,6 +106,12 @@ exports.testOCR = function(req, res) {
         });
 };
 
+exports.getFilesMatchingKeywords = function(req, res) {
+    var keywords = req.body.keywords;
+    console.log(keywords);
+    res.json({message: 'Got keywords ' + keywords.join(',')});
+};
+
 exports.uploadFile = function(req, res) {
     console.log("req:");
     console.log(req);
