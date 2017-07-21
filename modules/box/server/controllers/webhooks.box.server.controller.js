@@ -54,7 +54,7 @@ exports.testOCR = function(req, res) {
         detectOrientation: "true",
         "content-type": "application/json"
     };
-    
+
     /* Input passed within the POST body. Supported input methods: raw image binary or image URL. 
     
     Input requirements: 
@@ -62,7 +62,6 @@ exports.testOCR = function(req, res) {
     Supported image formats: JPEG, PNG, GIF, BMP. 
     Image file size must be less than 4MB.
     Image dimensions must be between 40 x 40 and 3200 x 3200 pixels, and the image cannot be larger than 100 megapixels.
-    
     */
     const body = {
         'url': 'https://nwrecruiter.azurewebsites.net/downloads/ResumeScreenShot.png'
