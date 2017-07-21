@@ -9,4 +9,6 @@ module.exports = function (app) {
 
   app.route('/api/file/testocr').get(webhooks.testOCR);
 
+  app.route('/api/file/upload').post(webhooks.uploadFile);
+
 };

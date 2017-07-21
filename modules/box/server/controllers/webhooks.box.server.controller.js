@@ -73,38 +73,41 @@ exports.testOCR = function(req, res) {
         })
         .then((response) => {
             console.log('Got response', response);
+            var out = '';
+            var regionsout = [];
+            for(var r in response.regions) {
+                var regionout = {};
+                var region = response.regions[r];
+                for(var l in region.lines) {
+                    var lineout = {};
+                    var line = region.lines[l];
+                    for(var w in line.words) {
+                        var word = line.words[w].text;
+                        out += word + ' ';
+                    }
+                    out += '\n';
+                }
+                out += '\n';
+            }
+            out = out.toLowerCase();
+            var matchedKeywords = [];
+            for(var k in config.keywords) {
+                var keyword = config.keywords[k].toLowerCase();
+                if(out.includes(keyword)) {
+                    matchedKeywords.push(keyword);
+                }
+            }
+            res.status(200).send({OCR: out, matchedKeywords: matchedKeywords});
+
         })
         .catch((err) => {
             console.error('Encountered error making request:', err);
-            res.status
+            res.status(500).send({message: e.message});
         });
-    
-    // var result = '';
-    // var options = {
-    //     hostname: endpoint_hostname,
-    //     port: 443,
-    //     path: endpoint_path,
-    //     method: 'POST'
-    // };
+};
 
-    // var newreq = https.request(options, function(newres) {
-    //     newres.on('data', function (d) {
-    //     result += d;
-    //     });
-    //     newres.on('end', function(e) {
-    //     var parsed = JSON.parse(result);
-    //     return res.json(parsed);
-    //     });
-    // });
-
-    // newreq.on('error', function(e) {
-    //     console.error(e);
-    //     return res.status(400).send(e);
-    // });
-    // newreq.on('end', function(e) {
-    //     // res.body = result;
-    // });
-    // newreq.end();
+exports.uploadFile = function(req, res) {
+    res.status(200).send({message: "Working api!"});
 };
 
 
