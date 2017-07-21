@@ -182,6 +182,8 @@ exports.uploadFile = function(req, res) {
             cb(null, './public/images/uploads');
         },
         filename: function (req, file, cb) {
+            //var replaced = file.originalname.replace(/\s/g, '_');
+            console.log("Filename: " + file.originalname);
             cb(null, file.originalname);
         }
     });
@@ -207,6 +209,8 @@ exports.uploadFile = function(req, res) {
                 //Update metadata
                 var scope = 'enterprise_16885475';
                 var templatekey = 'nwrecruit';
+                console.log('Assigning metadata..');
+                console.log(req.body);
                 var metadata = {
                     name: req.body.name,
                     eligible: req.body.eligible,
