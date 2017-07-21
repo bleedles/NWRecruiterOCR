@@ -2,6 +2,7 @@
 
 var validator = require('validator'),
   fs = require('fs'),
+  _ = require('lodash'),
   path = require('path'),
   BoxSDK = require('box-node-sdk'),
   multer = require('multer'),
@@ -20,6 +21,8 @@ var sdk = new BoxSDK({
 //Box Client
 var client = sdk.getBasicClient(config.box.appAuth.accessToken);
 const folderid = '32442834639';
+const scope = 'enterprise_16885475';
+const templatekey = 'nwrecruit';
 /**
  * Render the main application page
  */
@@ -159,7 +162,7 @@ function runOCR(url, callback) {
                     matchedKeywords.push(keyword);
                 }
             }
-            callback(null, {OCR: out, matchedKeywords: matchedKeywords});
+            callback(null, {OCR: out, matchedKeywordsString: matchedKeywords.join(','), matchedKeywordsArray: matchedKeywords});
 
         })
         .catch((err) => {
@@ -170,6 +173,51 @@ function runOCR(url, callback) {
 
 exports.getFilesMatchingKeywords = function(req, res) {
     var keywords = req.body.keywords;
+    //Get all items in folder
+    client.folders.getItems(
+        folderid,
+        {
+            fields: 'id,name,modified_at,size,url,tags',
+            offset: 0,
+            limit: 25
+        },
+        function(err, response) {
+            if(err) {
+                console.error(err);
+                res.status(500).send(err);
+            } else {
+                console.log(response);
+                var files = [];
+                for(var e in response.entries) {
+                    var item = response.entries[e];
+                    var intersection = _.intersection([keywords, item.tags]);
+                    if(item.type == 'file' && intersection.length > 0) {
+                        var file = item;
+                        files.push(file);
+                    }
+                }
+                var counter = 0;
+                for(var f in files) {
+                    var file = files[f];
+                    (function(file) {
+                        //Get Metadata
+                        client.files.getMetadata(fileid, scope, templatekey, function(err, response) {
+                            if(err) {
+                                console.error(err);
+                                res.status(500).send(err);
+                            } else {
+                                console.log(response);
+                                counter++;
+                                if(counter == files.length) {
+                                    res.json({message: "success"});
+                                }
+                            }
+                        });
+                    })(file);
+                }
+            }
+        }
+    );
     console.log(req.body);
     console.log(keywords);
     res.json({message: 'Got keywords ' + keywords.join(',')});
@@ -207,17 +255,16 @@ exports.uploadFile = function(req, res) {
                 var fileid = response.entries[0].id;
 
                 //Update metadata
-                var scope = 'enterprise_16885475';
-                var templatekey = 'nwrecruit';
+                
                 console.log('Assigning metadata..');
                 console.log(req.body);
                 var metadata = {
-                    name: req.body.name,
-                    eligible: req.body.eligible,
-                    relocate: req.body.relocate,
-                    notice: req.body.notice,
-                    salary: req.body.salary,
-                    notes: req.body.notes,
+                    name: req.body.data.name,
+                    eligible: req.body.data.eligible,
+                    relocate: req.body.data.relocate,
+                    notice: req.body.data.notice,
+                    salary: req.body.data.salary,
+                    notes: req.body.data.notes,
                     tags: ''
                 };
                 runOCR('https://nwrecruiter.azurewebsites.net/uploads/' + req.file.filename, function(err, response) {
@@ -226,16 +273,25 @@ exports.uploadFile = function(req, res) {
                         res.status(500).send(err);
                     } else {
                         console.log(response);
-                        metadata.tags = response.matchedKeywords;
-                        client.files.addMetadata(fileid, scope, templatekey, metadata, function(err, response) {
+                        metadata.tags = response.matchedKeywordsString;
+                        client.files.update(fileid, {tags : matchedKeywordsArray}, function(err, response) {
                             if(err) {
                                 console.error(err);
                                 res.status(500).send(err);
                             } else {
                                 console.log(response);
-                                res.json({message: "success"});
+                                client.files.addMetadata(fileid, scope, templatekey, metadata, function(err, response) {
+                                    if(err) {
+                                        console.error(err);
+                                        res.status(500).send(err);
+                                    } else {
+                                        console.log(response);
+                                        res.json({message: "success"});
+                                    }
+                                });
                             }
                         });
+                        
                     }
                 });
                 
