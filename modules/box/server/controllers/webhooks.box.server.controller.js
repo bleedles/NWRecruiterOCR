@@ -108,6 +108,7 @@ exports.testOCR = function(req, res) {
 
 exports.getFilesMatchingKeywords = function(req, res) {
     var keywords = req.body.keywords;
+    console.log(req.body);
     console.log(keywords);
     res.json({message: 'Got keywords ' + keywords.join(',')});
 };
@@ -119,7 +120,7 @@ exports.uploadFile = function(req, res) {
     console.log(req.file);
     console.log("req.body:");
     console.log(req.body);
-    var upload = multer({ dest: './public/images/uploads' }).single('resumeUpload');
+    var upload = multer({ dest: './public/images/uploads' }).single('picture');
     uploadImage()
       .then(function () {
         var stream = fs.createReadStream('./public/images/uploads/' + req.file.filename);
@@ -129,7 +130,6 @@ exports.uploadFile = function(req, res) {
                 res.status(500).send(err);
             } else {
                 console.log(response);
-                //
                 res.json({message: "success"});
             }
         });
