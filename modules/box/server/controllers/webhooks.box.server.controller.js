@@ -198,7 +198,7 @@ exports.uploadFile = function(req, res) {
         // Here we have req.file and req.body
         //TODO: create metadata object
         var stream = fs.createReadStream('./public/images/uploads/' + req.file.filename);
-        client.files.uploadFile(folderid, req.file.originalname, stream, function(err, response){
+        client.files.uploadFile(folderid, req.file.filename, stream, function(err, response){
             if(err) {
                 console.error(err);
                 res.status(500).send(err);
@@ -220,7 +220,7 @@ exports.uploadFile = function(req, res) {
                     notes: req.body.notes,
                     tags: ''
                 };
-                runOCR('https://nwrecruiter.azurewebsites.net/uploads/' + req.file.originalname, function(err, response) {
+                runOCR('https://nwrecruiter.azurewebsites.net/uploads/' + req.file.filename, function(err, response) {
                     if(err) {
                         console.error(err);
                         res.status(500).send(err);
