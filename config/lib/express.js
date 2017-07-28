@@ -85,6 +85,9 @@ module.exports.initMiddleware = function (app) {
       retrieveGroups: true
     });
     nodeSSPIObj.authenticate(req, res, function(err){
+      if(err) {
+        console.error(err);
+      }
       res.finished || next();
     });
   });
