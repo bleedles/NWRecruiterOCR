@@ -13,4 +13,6 @@ module.exports = function (app) {
 
   app.route('/api/files').post(webhooks.getFilesMatchingKeywords);
 
+  app.route('/api/file/updateMetadata').post(webhooks.updateFileMetadata);
+
 };

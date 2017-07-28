@@ -10,12 +10,12 @@
     
         var boxFactoryData = {};
 
-        boxFactoryData.postKeywords = function(keywords)
+        boxFactoryData.postKeywords = function(tags)
         {
           return  $http({
                 method: 'POST',
-                url: 'https://nwrecruiter.azurewebsites.net/api/files',
-                data: {'keywords': keywords}
+                url: '/api/files',
+                data: {'tags': tags}
             });
         };
 

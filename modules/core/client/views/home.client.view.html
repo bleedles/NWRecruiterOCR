@@ -1,13 +1,36 @@
 <div ng-app="app" ng-controller="HomeController">
-  <div class="jumbotron text-center">
+  <div class="text-center row">
         <!-- img alt="MEAN.JS" class="img-responsive text-center" src="/modules/core/client/img/brand/logo.png" /-->
         <h1>NWTA Workday Resumes</h1>
       </div>
   </div>
-  <div>
-    <button ng-click="searchSkillset()">Search</button>
-    <input type="text" class="form-control" placeholder="Search" ng-model="searchFilter" />
-  <table class="table table-bordered">
+  <div class="row">
+    <div class="input-group">
+    <tags-input class="ti-input-lg" ng-model="tags"></tags-input>
+    <span class="input-group-btn">
+      <button class="btn btn-default" ng-click="search()">Search</button>
+    </span>
+    </div>
+  </div>
+  <div class="row" ng-repeat="file in files">
+    <div class="col-md-4">
+      <iframe ng-src="{{file.trustedUrl}}" ></iframe>
+    </div>
+    <div class="col-md-8">
+      
+      <blockquote>{{file.metadata.name}}</blockquote>
+        <!--<blockquote>{{file.name}}</blockquote>-->
+      <blockquote> {{file.tags.join(",")}}</blockquote>
+      <blockquote> {{file.metadata.eligible}}</blockquote>
+      <blockquote> {{file.metadata.relocate}}</blockquote>
+      <blockquote> {{file.metadata.notice}}</blockquote>
+      <blockquote> {{file.metadata.salary}}</blockquote>
+      <blockquote> {{file.metadata.notes}}</blockquote>
+    </div>
+  </div>
+  
+  
+  <!--<table class="table table-bordered">
     <thead>
       <tr>
         <th>Applicant Name</th>
@@ -32,5 +55,5 @@
         <td> {{file.metadata.notes}}</td>
       </tr>
     </tbody>
-  </table>
-  </div>
+  </table>-->
+</div>

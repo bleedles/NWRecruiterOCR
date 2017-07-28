@@ -14,12 +14,21 @@ var sdk = new BoxSDK({
   clientSecret: config.box.clientSecret,
   appAuth: {
       keyID: config.box.appAuth.publicKeyID,
-      privateKey: config.box.appAuth.privateKey,
+      privateKey: fs.readFileSync(path.resolve('./config/keys/private_key.pem')),
       passphrase: config.box.appAuth.passphrase
   }
 });
 //Box Client
 var client = sdk.getBasicClient(config.box.appAuth.accessToken);
+
+// Get the service account client, used to create and manage app user accounts
+var serviceAccountClient = sdk.getAppAuthClient('enterprise', config.box.enterpriseID);
+
+//App user client
+function getClient(appUserId) {
+    return sdk.getAppAuthClient('user', appUserId);
+}
+
 const folderid = '32442834639';
 const scope = 'enterprise_16885475';
 const templatekey = 'nwrecruit';
@@ -131,6 +140,9 @@ function runOCR(url, callback) {
     var body = {
         'url': url
     };
+
+    console.log("OCR Url")
+    console.log(url);
     
     computerVision.ocr({
             parameters,
@@ -172,40 +184,34 @@ function runOCR(url, callback) {
 };
 
 exports.getFilesMatchingKeywords = function(req, res) {
-    var keywords = req.body.keywords;
-    //Get all items in folder
-    client.folders.getItems(
-        folderid,
-        {
-            fields: 'id,name,modified_at,size,url,tags',
-            offset: 0,
-            limit: 25
-        },
-        function(err, response) {
-            if(err) {
-                console.error(err);
-                res.status(500).send(err);
-            } else {
-                console.log(response);
-                var files = [];
-                for(var e in response.entries) {
-                    var item = response.entries[e];
-                    for(var w in keywords) {
-                        if(item.type == 'file' && _.includes(item.tags, keywords[w])){
-                            var file = item;
-                            files.push(file);
-                            break;
-                        }
-                    }
-                }
-                var counter = 0;
-                var outFiles = [];
+    var appUserClient = getClient('2145636820');
+    
+    var query = req.body.tags.map(function(elem) {
+        return elem.text
+    }).join(' AND ');
+
+    var options = {
+        type: 'file',
+        fields: 'expiring_embed_link,tags'
+    };
+
+    //Search API
+    // Query help: https://community.box.com/t5/How-to-Guides-for-Managing/Search-Terms-and-Capabilities-in-Box/ta-p/361
+    appUserClient.search.query(query, options, function(err, response) {
+        if(err) {
+            console.error(err);
+            res.status(500).send(err);
+        } else {
+            var files = response.entries;
+            var counter = 0;
+            var outFiles = [];
+            if(files.length > 0) {
                 for(var f in files) {
                     var file = files[f];
                     (function(file) {
                         //Get Metadata
                         console.log(file);
-                        client.files.getAllMetadata(file.id, function(err, response) {
+                        appUserClient.files.getAllMetadata(file.id, function(err, response) {
                             if(err) {
                                 console.error(err);
                                 res.status(500).send(err);
@@ -227,12 +233,73 @@ exports.getFilesMatchingKeywords = function(req, res) {
                         });
                     })(file);
                 }
+            } else {
+                res.json({files: outFiles});
             }
         }
-    );
+    });
+    //Non-search API search
+    //Get all items in folder
+    // client.folders.getItems(
+    //     folderid,
+    //     {
+    //         fields: 'id,name,modified_at,size,url,tags',
+    //         offset: 0,
+    //         limit: 25
+    //     },
+    //     function(err, response) {
+    //         if(err) {
+    //             console.error(err);
+    //             res.status(500).send(err);
+    //         } else {
+    //             console.log(response);
+    //             var files = [];
+    //             for(var e in response.entries) {
+    //                 var item = response.entries[e];
+    //                 for(var w in keywords) {
+    //                     if(item.type == 'file' && _.includes(item.tags, keywords[w])){
+    //                         var file = item;
+    //                         files.push(file);
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //             var counter = 0;
+    //             var outFiles = [];
+    //             for(var f in files) {
+    //                 var file = files[f];
+    //                 (function(file) {
+    //                     //Get Metadata
+    //                     console.log(file);
+    //                     client.files.getAllMetadata(file.id, function(err, response) {
+    //                         if(err) {
+    //                             console.error(err);
+    //                             res.status(500).send(err);
+    //                         } else {
+    //                             console.log("all metadata");
+    //                             console.log(response);
+    //                             for(var m in response.entries) {
+    //                                 var metaTemplate = response.entries[m];
+    //                                 if(metaTemplate.$template == 'nwrecruit') {
+    //                                     file.metadata = metaTemplate;
+    //                                 }
+    //                                 outFiles.push(file);
+    //                             }
+    //                             counter++;
+    //                             if(counter == files.length) {
+    //                                 res.json({files: outFiles});
+    //                             }
+    //                         }
+    //                     });
+    //                 })(file);
+    //             }
+    //         }
+    //     }
+    // );
 };
 
 exports.uploadFile = function(req, res) {
+    var appUserClient = getClient('2145636820');
     console.log(req);
     var storage = multer.diskStorage({
         destination: function (req, file, cb) {
@@ -255,7 +322,7 @@ exports.uploadFile = function(req, res) {
         // Here we have req.file and req.body
         //TODO: create metadata object
         var stream = fs.createReadStream('./public/images/uploads/' + req.file.filename);
-        client.files.uploadFile(folderid, req.file.filename, stream, function(err, response){
+        appUserClient.files.uploadFile(folderid, req.file.filename, stream, function(err, response){
             if(err) {
                 console.error(err);
                 res.status(500).send(err);
@@ -268,28 +335,35 @@ exports.uploadFile = function(req, res) {
                 console.log('Assigning metadata..');
                 console.log(req.body);
                 
-                var metadata = JSON.parse(req.body.data);
-                console.log(metadata);
-                runOCR('https://nwrecruiter.azurewebsites.net/uploads/' + req.file.filename, function(err, response) {
+                // var metadata = JSON.parse(req.body.data);
+                // console.log(metadata);
+                console.log(req.headers.host)
+
+                runOCR(req.protocol + '://' + req.headers.host + '/uploads/' + req.file.filename, function(err, response) {
                     if(err) {
                         console.error(err);
                         res.status(500).send(err);
                     } else {
                         console.log(response);
+                        console.log('OCR Completeted')
+                        var metadata = {}
                         metadata.tags = response.matchedKeywordsString;
-                        client.files.update(fileid, {tags : response.matchedKeywordsArray}, function(err, response) {
+                        appUserClient.files.update(fileid, {tags : response.matchedKeywordsArray}, function(err, response) {
                             if(err) {
                                 console.error(err);
                                 res.status(500).send(err);
                             } else {
                                 console.log(response);
-                                client.files.addMetadata(fileid, scope, templatekey, metadata, function(err, response) {
+                                appUserClient.files.addMetadata(fileid, scope, templatekey, metadata, function(err, response) {
                                     if(err) {
                                         console.error(err);
                                         res.status(500).send(err);
                                     } else {
                                         console.log(response);
-                                        res.json({message: "success"});
+                                        //res.json({message: "success"});
+
+                                        //TODO : send back file id and metadata
+                                        res.json({message : "Success!", tags: metadata.tags, boxFileid: fileid})
                                     }
                                 });
                             }
@@ -316,5 +390,23 @@ exports.uploadFile = function(req, res) {
         });
     }
 };
+
+exports.updateFileMetadata = function(req, res) {
+    var appUserClient = getClient('2145636820');
+    console.log(req);
+
+    var fileid = req.body.boxFileid,
+        metadata = req.body.data;
+
+    appUserClient.files.addMetadata(fileid, scope, templatekey, metadata, function(err, response) {
+        if(err) {
+            console.error(err);
+            res.status(500).send(err);
+        } else {
+            console.log(response);
+            res.json({message: "success"});
+        }
+    });
+}
 
 

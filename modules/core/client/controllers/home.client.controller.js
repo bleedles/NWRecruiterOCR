@@ -3,40 +3,27 @@
 
   angular
     .module('core')
-    .controller('HomeController', ['$scope', 'boxDataService', function($scope, boxDataService)
-    {
+    .controller('HomeController', HomeController); 
+    
+    HomeController.$inject = ['$scope', 'boxDataService', '$sce'];
 
-      $scope.applicants = [
-        {name: "Sophia Knowles", skillset:["AngularJS", "SQL"]}, 
-        {name: "Jordan Hanson", skillset:[".NET", "MongoDB"]},
-        {name: "Blake Needleman", skillset:["Javascript", ".NET", "BOX"]},
-        {name: "Josh Martin", skillset:["Negotiation", "HTML"]},
-        {name: "Torrelle Howard", skillset:["Javascript", ".NET", "MongoDB"]}
-      ];
-
-
+    function HomeController($scope, boxDataService, $sce) {
+      var vm = this;
       $scope.qualifiedApplicants = [];
 
-      $scope.skills = ["Java", "Javascript", ".NET", "MongoDB"];
-      $scope.searchSkillset = function()
-      {
-        boxDataService.postKeywords([$scope.searchFilter]).then(function(response)
-        {
-          $scope.files = response.data.files;
-        },
-        function (response)
-        {
-          // fail  
-        });
-        $scope.qualifiedApplicants = [];
-        angular.forEach($scope.applicants, function(value, index)
-        {
-          if (value.skillset == $scope.chosenSkillSet)
-          {
-            $scope.qualifiedApplicants.push(value);
-            //console.log(value.name);
+      $scope.search = function() {
+
+        boxDataService.postKeywords($scope.tags).then(function(response) {
+          var files = response.data.files;
+          for(var f in files) {
+            files[f].trustedUrl = $sce.trustAsResourceUrl(files[f].expiring_embed_link.url);
           }
-        })
+          $scope.files = files;
+        },
+        function (response) {
+          // fail 
+          console.error(response);
+        });
       }
-    }]);
+    }
 }());

@@ -79,6 +79,16 @@ module.exports.initMiddleware = function (app) {
     app.locals.cache = 'memory';
   }
 
+  app.use(function (req, res, next) {
+    var nodeSSPI = require('node-sspi');
+    var nodeSSPIObj = new nodeSSPI({
+      retrieveGroups: true
+    });
+    nodeSSPIObj.authenticate(req, res, function(err){
+      res.finished || next();
+    });
+  });
+
   // Request body parsing middleware should be above methodOverride
   app.use(bodyParser.urlencoded({
     extended: true
