@@ -118,7 +118,7 @@ module.exports.initSession = function (app, db) {
     },
     name: config.sessionKey,
     store: new MongoStore({
-      mongooseConnection: db.connection,
+      mongooseConnection: config.db.options.useMongoClient ? db : db.connection,
       collection: config.sessionCollection
     })
   }));
