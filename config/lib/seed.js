@@ -114,8 +114,9 @@ module.exports.start = function start(options) {
   // Initialize the default seed options
   seedOptions = _.clone(config.seedDB.options, true);
 
-  // Check for provided options
+  
 
+  // Check for provided options
   if (_.has(options, 'logResults')) {
     seedOptions.logResults = options.logResults;
   }
@@ -129,10 +130,29 @@ module.exports.start = function start(options) {
   }
 
   var User = mongoose.model('User');
+  var Keyword = mongoose.model('Keyword');
+  
   return new Promise(function (resolve, reject) {
 
     var adminAccount = new User(seedOptions.seedAdmin);
     var userAccount = new User(seedOptions.seedUser);
+
+    var keywords = [];
+    for(var w in seedOptions.keywords) {
+      var keyword = new Keyword({
+        text: seedOptions.keywords[w],
+        category: 'IT',
+        modifiedBy: 'System'
+      });
+      delete keyword._doc._id;
+      keywords.push(keyword);
+    }
+    keywords.forEach(function(item) {
+      Keyword.update({text: item.text, category: item.category}, item, { upsert: true }, function(err, raw) {
+        console.error(err);
+        console.log(raw);
+      });
+    });
 
     // If production only seed admin if it does not exist
     if (process.env.NODE_ENV === 'production') {
@@ -144,7 +164,6 @@ module.exports.start = function start(options) {
         .catch(reportError(reject));
     } else {
       // Add both Admin and User account
-
       User.generateRandomPassphrase()
         .then(seedTheUser(userAccount))
         .then(User.generateRandomPassphrase)

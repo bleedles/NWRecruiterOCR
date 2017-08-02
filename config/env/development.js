@@ -102,6 +102,9 @@ module.exports = {
     seed: process.env.MONGO_SEED === 'true',
     options: {
       logResults: process.env.MONGO_SEED_LOG_RESULTS !== 'false',
+      keywords: [
+        'java', 'c#', 'javascript', 'sql', 'angular', '.net', 'mongo', 'azure', 'aws', 'python', 'sharepoint'
+      ],
       seedUser: {
         username: process.env.MONGO_SEED_USER_USERNAME || 'seeduser',
         provider: 'local',
