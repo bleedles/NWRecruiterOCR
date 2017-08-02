@@ -20,14 +20,14 @@ function seedDB() {
 mongoose.loadModels(seedDB);
 
 module.exports.init = function init(callback) {
-  // mongoose.connect(function (db) {
-  //   // Initialize express
-  //   var app = express.init(db);
-  //   if (callback) callback(app, db, config);
+  mongoose.connect(function (db) {
+    // Initialize express
+    var app = express.init(db);
+    if (callback) callback(app, db, config);
 
-  // });
-  var app = express.init();
-  if (callback) callback(app, null, config);
+  });
+  // var app = express.init();
+  // if (callback) callback(app, null, config);
 };
 
 module.exports.start = function start(callback) {

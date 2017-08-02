@@ -8,7 +8,7 @@
     <div class="input-group">
     <tags-input class="ti-input-lg" ng-model="tags"></tags-input>
     <span class="input-group-btn">
-      <button class="btn btn-default" ng-click="search()">Search</button>
+      <button class="btn btn-lg btn-default" ng-click="search()">Search</button>
     </span>
     </div>
   </div>
@@ -17,7 +17,6 @@
       <iframe ng-src="{{file.trustedUrl}}" ></iframe>
     </div>
     <div class="col-md-8">
-      
       <blockquote>{{file.metadata.name}}</blockquote>
         <!--<blockquote>{{file.name}}</blockquote>-->
       <blockquote> {{file.tags.join(",")}}</blockquote>
