@@ -6,7 +6,9 @@
   </div>
   <div class="row">
     <div class="input-group">
-    <tags-input class="ti-input-lg" ng-model="tags"></tags-input>
+    <tags-input class="ti-input-lg" display-property="text" ng-model="tags">
+      <auto-complete source="loadTags($query)" template="/modules/core/client/views/templates/tags-auto-complete.html"></auto-complete>
+    </tags-input>
     <span class="input-group-btn">
       <button class="btn btn-lg btn-default" ng-click="search()">Search</button>
     </span>

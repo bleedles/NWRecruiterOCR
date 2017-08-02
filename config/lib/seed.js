@@ -130,25 +130,25 @@ module.exports.start = function start(options) {
   }
 
   var User = mongoose.model('User');
-  var Keyword = mongoose.model('Keyword');
+  var Tag = mongoose.model('Tag');
   
   return new Promise(function (resolve, reject) {
 
     var adminAccount = new User(seedOptions.seedAdmin);
     var userAccount = new User(seedOptions.seedUser);
 
-    var keywords = [];
+    var tags = [];
     for(var w in seedOptions.keywords) {
-      var keyword = new Keyword({
+      var tag = new Tag({
         text: seedOptions.keywords[w],
         category: 'IT',
         modifiedBy: 'System'
       });
-      delete keyword._doc._id;
-      keywords.push(keyword);
+      delete tag._doc._id;
+      tags.push(tag);
     }
-    keywords.forEach(function(item) {
-      Keyword.update({text: item.text, category: item.category}, item, { upsert: true }, function(err, raw) {
+    tags.forEach(function(item) {
+      Tag.update({text: item.text, category: item.category}, item, { upsert: true }, function(err, raw) {
         console.error(err);
         console.log(raw);
       });

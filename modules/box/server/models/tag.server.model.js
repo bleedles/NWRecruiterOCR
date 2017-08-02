@@ -7,9 +7,9 @@ var mongoose = require('mongoose'),
   Schema = mongoose.Schema;
 
 /**
- * Invite Schema
+ * Tag Schema
  */
-var KeywordSchema = new Schema({
+var TagSchema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now
@@ -37,4 +37,4 @@ var KeywordSchema = new Schema({
   }
 });
 
-mongoose.model('Keyword', KeywordSchema);
+mongoose.model('Tag', TagSchema);

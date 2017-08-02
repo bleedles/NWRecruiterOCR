@@ -5,14 +5,15 @@
     .module('core')
     .controller('HomeController', HomeController); 
     
-    HomeController.$inject = ['$scope', 'boxDataService', '$sce'];
+    HomeController.$inject = ['$scope', 'boxDataService', '$sce', '$http'];
 
-    function HomeController($scope, boxDataService, $sce) {
+    function HomeController($scope, boxDataService, $sce, $http) {
       var vm = this;
       $scope.qualifiedApplicants = [];
 
-      $scope.search = function() {
+      $scope.loadTags = loadTags;
 
+      $scope.search = function() {
         boxDataService.postKeywords($scope.tags).then(function(response) {
           var files = response.data.files;
           for(var f in files) {
@@ -23,6 +24,13 @@
         function (response) {
           // fail 
           console.error(response);
+        });
+      }
+
+      function loadTags($query) {
+        return $http.get('/api/tags/' + $query, { cache: true}).then(function(response) {
+          var tags = response.data;
+          return tags;
         });
       }
     }
