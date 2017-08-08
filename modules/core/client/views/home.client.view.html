@@ -1,60 +1,60 @@
 <div ng-app="app" ng-controller="HomeController">
-  <div class="text-center row">
+  <div style="margin-top:200px;">
+    <div class="text-center row">
         <!-- img alt="MEAN.JS" class="img-responsive text-center" src="/modules/core/client/img/brand/logo.png" /-->
         <h1>NWTA Workday Resumes</h1>
       </div>
-  </div>
-  <div class="row">
-    <div class="input-group">
-    <tags-input class="ti-input-lg" display-property="text" ng-model="tags">
-      <auto-complete source="loadTags($query)" template="/modules/core/client/views/templates/tags-auto-complete.html"></auto-complete>
-    </tags-input>
-    <span class="input-group-btn">
-      <button class="btn btn-lg btn-default" ng-click="search()">Search</button>
-    </span>
+    </div>
+    <div class="row" style="margin-top:20px;">
+      <!-- <div class="input-group">
+        <tags-input class="ti-input-lg" display-property="text" ng-model="tags">
+          <auto-complete source="loadTags($query)" template="/modules/core/client/views/templates/tags-auto-complete.html"></auto-complete>
+        </tags-input>
+        <span class="input-group-btn">
+          <button class="btn btn-lg btn-default" ng-click="search()">Search</button>
+        </span>
+      </div> -->
+      
+    </div>
+    <section layout="row" layout-sm="column" layout-align="center center" layout-wrap>
+      <md-chips class="mg-raised" ng-model="tags" placeholder="Add an item" md-transform-chip="customChip($chip)">
+        <md-autocomplete
+            md-selected-item="selectedItem"
+            md-search-text="searchText"
+            md-items="tag in loadTags(searchText)"
+            md-item-text="tag.text"
+            md-min-length="2"
+            placeholder="Add some tags...">
+          <md-item-template>
+            <span md-highlight-text="searchText" md-highlight-flags="^i">{{tag.text}}</span>
+            <span>({{tag.category}})</span>          
+          </md-item-template>
+          <md-not-found>
+            No states matching "{{searchText}}" were found!
+          </md-not-found>
+        </md-autocomplete>
+        <md-chip-template>
+          <strong>{{$chip.text}}</strong>
+          <span>({{$chip.category}})</span>
+        </md-chip-template>
+      </md-chips>
+      <md-button class="md-raised md-primary" ng-click="search()">Search</md-button>
+    </section>
+
+    <div class="row" ng-repeat="file in files">
+      <div class="col-md-4">
+        <iframe ng-src="{{file.trustedUrl}}" ></iframe>
+      </div>
+      <div class="col-md-8">
+        <blockquote>{{file.metadata.name}}</blockquote>
+          <!--<blockquote>{{file.name}}</blockquote>-->
+        <blockquote> {{file.tags.join(",")}}</blockquote>
+        <blockquote> {{file.metadata.eligible}}</blockquote>
+        <blockquote> {{file.metadata.relocate}}</blockquote>
+        <blockquote> {{file.metadata.notice}}</blockquote>
+        <blockquote> {{file.metadata.salary}}</blockquote>
+        <blockquote> {{file.metadata.notes}}</blockquote>
+      </div>
     </div>
   </div>
-  <div class="row" ng-repeat="file in files">
-    <div class="col-md-4">
-      <iframe ng-src="{{file.trustedUrl}}" ></iframe>
-    </div>
-    <div class="col-md-8">
-      <blockquote>{{file.metadata.name}}</blockquote>
-        <!--<blockquote>{{file.name}}</blockquote>-->
-      <blockquote> {{file.tags.join(",")}}</blockquote>
-      <blockquote> {{file.metadata.eligible}}</blockquote>
-      <blockquote> {{file.metadata.relocate}}</blockquote>
-      <blockquote> {{file.metadata.notice}}</blockquote>
-      <blockquote> {{file.metadata.salary}}</blockquote>
-      <blockquote> {{file.metadata.notes}}</blockquote>
-    </div>
-  </div>
-  
-  
-  <!--<table class="table table-bordered">
-    <thead>
-      <tr>
-        <th>Applicant Name</th>
-        <th>Filename</th>
-        <th>Skillset</th>
-        <th>Eligibility</th>
-        <th>Relocation</th>
-        <th>Notice</th>
-        <th>Salary</th>
-        <th>Notes</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr ng-repeat="file in files">
-        <td> {{file.metadata.name}}</td>
-        <td>{{file.name}}</td>
-        <td> {{file.tags.join(",")}}</td>
-        <td> {{file.metadata.eligible}}</td>
-        <td> {{file.metadata.relocate}}</td>
-        <td> {{file.metadata.notice}}</td>
-        <td> {{file.metadata.salary}}</td>
-        <td> {{file.metadata.notes}}</td>
-      </tr>
-    </tbody>
-  </table>-->
 </div>

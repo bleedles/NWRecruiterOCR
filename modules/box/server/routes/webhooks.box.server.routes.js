@@ -15,4 +15,6 @@ module.exports = function (app) {
 
   app.route('/api/file/updateMetadata').post(webhooks.updateFileMetadata);
 
+  app.route('/api/file/runOCR').post(webhooks.getOCRTags);
+
 };

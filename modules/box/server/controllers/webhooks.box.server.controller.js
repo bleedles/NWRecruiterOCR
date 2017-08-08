@@ -14,24 +14,52 @@ var sdk = new BoxSDK({
   clientSecret: config.box.clientSecret,
   appAuth: {
       keyID: config.box.appAuth.publicKeyID,
-      privateKey: fs.readFileSync(path.resolve('./config/keys/private_key.pem')),
+      privateKey: fs.readFileSync(path.resolve(config.box.appAuth.privateKeyPath)),
       passphrase: config.box.appAuth.passphrase
   }
 });
+
+var nwSdk = new BoxSDK({
+  clientID: config.nationwideBoxAppSettings.clientID,
+  clientSecret: config.nationwideBoxAppSettings.clientSecret,
+  appAuth: {
+      keyID: config.nationwideBoxAppSettings.appAuth.publicKeyID,
+      privateKey: fs.readFileSync(path.resolve(config.nationwideBoxAppSettings.appAuth.privateKeyPath)),
+      passphrase: config.nationwideBoxAppSettings.appAuth.passphrase
+  }
+});
+
 //Box Client
 var client = sdk.getBasicClient(config.box.appAuth.accessToken);
 
 // Get the service account client, used to create and manage app user accounts
-var serviceAccountClient = sdk.getAppAuthClient('enterprise', config.box.enterpriseID);
+var serviceAccountClient = nwSdk.getAppAuthClient('enterprise', config.nationwideBoxAppSettings.enterpriseID);
 
 //App user client
-function getClient(appUserId) {
-    return sdk.getAppAuthClient('user', appUserId);
+function getClient(appUserId, nwAppUserId) {
+    if(nwAppUserId) {
+        return nwSdk.getAppAuthClient('user', nwAppUserId);
+        // serviceAccountClient.enterprise.addAppUser(
+        //     'Spot Team Test',
+        //     {},
+        //     function(err, response) {
+        //         if(err) {
+        //             console.error(err);
+        //             return err;
+        //         } else {
+        //             console.log(response);
+        //             return nwSdk.getAppAuthClient('user', response.id);
+        //         }
+        //     }
+        // );
+    } else {
+        return sdk.getAppAuthClient('user', appUserId);
+    }
 }
 
-const folderid = '32442834639';
-const scope = 'enterprise_16885475';
-const templatekey = 'nwrecruit';
+const folderid = config.box.folderid;
+const scope = config.box.scope;
+const templatekey = config.box.templatekey;
 /**
  * Render the main application page
  */
@@ -76,7 +104,7 @@ exports.testOCR = function(req, res) {
     Image dimensions must be between 40 x 40 and 3200 x 3200 pixels, and the image cannot be larger than 100 megapixels.
     */
     const body = {
-        'url': 'https://nwrecruiter.azurewebsites.net/downloads/ResumeScreenShot.png'
+        'url': 'https://nwrecruiterweb.azurewebsites.net/downloads/ResumeScreenShot.png'
     };
     
     computerVision.ocr({
@@ -184,7 +212,7 @@ function runOCR(url, callback) {
 };
 
 exports.getFilesMatchingKeywords = function(req, res) {
-    var appUserClient = getClient('2145636820');
+    var appUserClient = getClient(config.box.appUserID, config.nationwideBoxAppSettings.appUserID);
     
     var query = req.body.tags.map(function(elem) {
         return elem.text
@@ -210,7 +238,7 @@ exports.getFilesMatchingKeywords = function(req, res) {
                     var file = files[f];
                     (function(file) {
                         //Get Metadata
-                        console.log(file);
+                        //console.log(file);
                         appUserClient.files.getAllMetadata(file.id, function(err, response) {
                             if(err) {
                                 console.error(err);
@@ -218,13 +246,18 @@ exports.getFilesMatchingKeywords = function(req, res) {
                             } else {
                                 console.log("all metadata");
                                 console.log(response);
-                                for(var m in response.entries) {
-                                    var metaTemplate = response.entries[m];
-                                    if(metaTemplate.$template == 'nwrecruit') {
-                                        file.metadata = metaTemplate;
+                                if(response.entries.length > 0) {
+                                    for(var m in response.entries) {
+                                        var metaTemplate = response.entries[m];
+                                        if(metaTemplate.$template == templatekey) {
+                                            file.metadata = metaTemplate;
+                                        }
+                                        outFiles.push(file);
                                     }
+                                } else {
                                     outFiles.push(file);
                                 }
+                                
                                 counter++;
                                 if(counter == files.length) {
                                     res.json({files: outFiles});
@@ -299,100 +332,55 @@ exports.getFilesMatchingKeywords = function(req, res) {
 };
 
 exports.uploadFile = function(req, res) {
-    var appUserClient = getClient('2145636820');
+    var appUserClient = getClient(config.box.appUserID);
+    console.log("Uploading file to box...")
     console.log(req);
-    var storage = multer.diskStorage({
-        destination: function (req, file, cb) {
-            cb(null, './public/images/uploads');
-        },
-        filename: function (req, file, cb) {
-            //var replaced = file.originalname.replace(/\s/g, '_');
-            console.log("Filename: " + file.originalname);
-            cb(null, file.originalname);
-        }
-    });
-    var upload = multer({ storage: storage }).single('picture');
-    uploadImage()
-      .then(function () {
-        console.log("req.file:");
-        console.log(req.file);
-        console.log("req.body:");
-        console.log(req.body);
+    console.log(req.body)
 
-        // Here we have req.file and req.body
-        //TODO: create metadata object
-        var stream = fs.createReadStream('./public/images/uploads/' + req.file.filename);
-        appUserClient.files.uploadFile(folderid, req.file.filename, stream, function(err, response){
-            if(err) {
-                console.error(err);
-                res.status(500).send(err);
-            } else {
-                //TODO: Get ID from response
-                var fileid = response.entries[0].id;
+    var stream = fs.createReadStream('./public/images/uploads/' + req.body.fileInfo.storedFilename);
+    var tags = req.body.data.tags
+    appUserClient.files.uploadFile(folderid, req.body.fileInfo.filename, stream, function(err, response){
+        if(err) {
+            console.error(err);
+            res.status(500).send(err);
+        } else {
+            //TODO: Get ID from response
+            var fileid = response.entries[0].id;
 
-                //Update metadata
-                
-                console.log('Assigning metadata..');
-                console.log(req.body);
-                
-                // var metadata = JSON.parse(req.body.data);
-                // console.log(metadata);
-                console.log(req.headers.host)
+            //Update metadata
+            
+            console.log('Assigning metadata..');
+            console.log(req.body);
 
-                runOCR(req.protocol + '://' + req.headers.host + '/uploads/' + req.file.filename, function(err, response) {
-                    if(err) {
-                        console.error(err);
-                        res.status(500).send(err);
-                    } else {
-                        console.log(response);
-                        console.log('OCR Completeted')
-                        var metadata = {}
-                        metadata.tags = response.matchedKeywordsString;
-                        appUserClient.files.update(fileid, {tags : response.matchedKeywordsArray}, function(err, response) {
-                            if(err) {
-                                console.error(err);
-                                res.status(500).send(err);
-                            } else {
-                                console.log(response);
-                                appUserClient.files.addMetadata(fileid, scope, templatekey, metadata, function(err, response) {
-                                    if(err) {
-                                        console.error(err);
-                                        res.status(500).send(err);
-                                    } else {
-                                        console.log(response);
-                                        //res.json({message: "success"});
-
-                                        //TODO : send back file id and metadata
-                                        res.json({message : "Success!", tags: metadata.tags, boxFileid: fileid})
-                                    }
-                                });
-                            }
-                        });
-                        
-                    }
-                });
-            }
-        });
-      })
-      .catch(function (err) {
-        res.status(500).send(err);
-      });
-
-    function uploadImage () {
-        return new Promise(function (resolve, reject) {
-            upload(req, res, function (uploadError) {
-                if (uploadError) {
-                    reject(uploadError);
+            var metadata = req.body.data;
+            
+            appUserClient.files.update(fileid, {tags : tags}, function(err, response) {
+                if(err) {
+                    console.error(err);
+                    res.status(500).send(err);
                 } else {
-                    resolve();
+                    console.log(response);
+                    appUserClient.files.addMetadata(fileid, scope, templatekey, metadata, function(err, response) {
+                        if(err) {
+                            console.error(err);
+                            res.status(500).send(err);
+                        } else {
+                            console.log(response);
+                            //res.json({message: "success"});
+
+                            //TODO : send back file id and metadata
+                            res.json({message : "Success!", tags: metadata.tags, boxFileid: fileid})
+                        }
+                    });
                 }
             });
-        });
-    }
+            
+        }
+    });
 };
 
 exports.updateFileMetadata = function(req, res) {
-    var appUserClient = getClient('2145636820');
+    var appUserClient = getClient(config.box.appUserID);
     console.log(req);
 
     var fileid = req.body.boxFileid,
@@ -407,6 +395,60 @@ exports.updateFileMetadata = function(req, res) {
             res.json({message: "success"});
         }
     });
+}
+
+exports.getOCRTags = function(req, res) {
+    console.log("Get OCR Tags")
+    console.log(req);
+    var storage = multer.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, './public/images/uploads');
+        },
+        filename: function (req, file, cb) {
+            //var replaced = file.originalname.replace(/\s/g, '_');
+            console.log("Filename: " + file.originalname);
+            cb(null, file.originalname);
+        }
+    });
+
+    var upload = multer({ storage: storage }).single('picture');
+    uploadImage()
+      .then(function () {
+        console.log("req.file:");
+        console.log(req.file);
+        console.log("req.body:");
+        console.log(req.body);
+
+        // Here we have req.file and req.body
+        //TODO: create metadata object
+        var stream = fs.createReadStream('./public/images/uploads/' + req.file.filename);
+        console.log("Running OCR")
+
+        runOCR(req.protocol + '://' + req.headers.host + '/uploads/' + req.file.filename, function(err, response) {
+            if(err) {
+                console.error(err);
+                console.log("OCR Error")
+                res.status(500).send(err);
+            } else {
+                console.log(response);
+                console.log('OCR Completed')
+                console.log(response.matchedKeywordsString)
+                res.json({message : "Success!", tags: response.matchedKeywordsString})
+            }
+        });
+      });
+
+    function uploadImage () {
+        return new Promise(function (resolve, reject) {
+            upload(req, res, function (uploadError) {
+                if (uploadError) {
+                    reject(uploadError);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
 }
 
 

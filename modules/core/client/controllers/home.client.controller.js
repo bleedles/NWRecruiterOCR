@@ -10,8 +10,9 @@
     function HomeController($scope, boxDataService, $sce, $http) {
       var vm = this;
       $scope.qualifiedApplicants = [];
-
+      $scope.tags = [];
       $scope.loadTags = loadTags;
+      $scope.customChip = customChip;
 
       $scope.search = function() {
         boxDataService.postKeywords($scope.tags).then(function(response) {
@@ -32,6 +33,14 @@
           var tags = response.data;
           return tags;
         });
+      }
+
+      function customChip($chip) {
+        if($chip.text) {
+          return $chip;
+        } else {
+          return {text: $chip, category: 'custom'};
+        }
       }
     }
 }());
